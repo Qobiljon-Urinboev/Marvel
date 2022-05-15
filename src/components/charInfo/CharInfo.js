@@ -1,9 +1,11 @@
 import {Component} from 'react/cjs/react.production.min';
 import Spinner from '../spinner/spinner';
+import PropTypes from 'prop-types';
 import ErrorMessage from '../errorMessage/ErrorMessage';
 import Skeleton from '../skeleton/Skeleton'
 import MarvelService from '../../services/MarvelService';
 import './charInfo.scss';
+
 
 class CharInfo extends Component {
   state = {
@@ -21,6 +23,7 @@ class CharInfo extends Component {
       this.updateChar()
     }
   }
+ 
 updateChar = ()=>{
   const {charId}=this.props
   if(!charId){
@@ -113,6 +116,9 @@ const View =({char})=>{
         </ul>
     </>
   )
+}
+CharInfo.propTypes = {
+  charId: PropTypes.string
 }
 
 export default CharInfo;

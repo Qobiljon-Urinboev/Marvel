@@ -1,32 +1,54 @@
 import {Component} from 'react';
+import PropTypes from 'prop-types';
 import Spinner from '../spinner/spinner';
 import ErrorMessage from '../errorMessage/ErrorMessage';
 import MarvelService from '../../services/MarvelService';
+
 import './charList.scss';
 
 class CharList extends Component {
   constructor (props) {
     super (props);
     this.state = {
-      res: [],
+      char: [],
       loading: true,
       error: false,
+      newItemLoading: false,
+      offset: 1559,
+      charEnded: false,
     };
   }
   marvelService = new MarvelService ();
 
   componentDidMount () {
+    this.onRequest ();
+  }
+  onRequest = offset => {
+    this.onCharlistLoading ();
     this.marvelService
-      .getAllCharcters ()
+      .getAllCharcters (offset)
       .then (this.onCharlistLoaded)
       .catch (this.onError);
-  }
-
-  onCharlistLoaded = res => {
+  };
+  onCharlistLoading = () => {
     this.setState ({
-      res,
-      loading: false,
+      newItemLoading: true,
     });
+  };
+  onCharlistLoaded = newChar => {
+    console.log(newChar.length);
+    let ended = false
+    if(newChar.length===0){
+      ended= true
+    }
+
+    this.setState (({offset,char}) => ({
+      char: [...char, ...newChar],
+      loading: false,
+      newItemLoading: false,
+      offset: offset + 9,
+      charEnded: ended
+    }));
   };
   onError = () => {
     this.setState ({
@@ -39,7 +61,8 @@ class CharList extends Component {
     const items = arr.map (item => {
       let imgStyle = {objectFit: 'cover'};
       if (
-        item.thumbnail === 'http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg'
+        item.thumbnail ===
+        'http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg'
       ) {
         imgStyle = {objectFit: 'unset'};
       }
@@ -47,7 +70,7 @@ class CharList extends Component {
         <li
           className="char__item"
           key={item.id}
-          onClick={() => this.props.onCharSelected(item.id)}
+          onClick={() => this.props.onCharSelected (item.id)}
         >
           <img src={item.thumbnail} alt={item.name} style={imgStyle} />
           <div className="char__name">{item.name}</div>
@@ -61,8 +84,8 @@ class CharList extends Component {
     );
   }
   render () {
-    const {res, loading, error} = this.state;
-    const items = this.renderItems (res);
+    const {char, loading, error, offset, newItemLoading, charEnded} = this.state;
+    const items = this.renderItems (char);
 
     const errorMessage = error ? <ErrorMessage /> : null;
     const spinner = loading ? <Spinner /> : null;
@@ -76,12 +99,19 @@ class CharList extends Component {
           {content}
 
         </ul>
-        <button className="button button__main button__long">
+        <button
+         className="button button__main button__long"
+         disabled={newItemLoading}
+         style={{'display': charEnded ? 'none' : 'block'}}
+         onClick={()=> this.onRequest(offset)}
+         >
           <div className="inner">load more</div>
         </button>
       </div>
     );
   }
 }
-
+CharList.propTypes = {
+  onCharSelected: PropTypes.func.isRequired
+}
 export default CharList;
