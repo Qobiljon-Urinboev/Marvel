@@ -20,6 +20,10 @@ class CharList extends Component {
   }
   marvelService = new MarvelService ();
 
+  setRef = (elem, id) => {
+    console.log (id);
+    this.myRef = elem;
+  };
   componentDidMount () {
     this.onRequest ();
   }
@@ -36,18 +40,17 @@ class CharList extends Component {
     });
   };
   onCharlistLoaded = newChar => {
-    console.log(newChar.length);
-    let ended = false
-    if(newChar.length===0){
-      ended= true
+    let ended = false;
+    if (newChar.length === 0) {
+      ended = true;
     }
 
-    this.setState (({offset,char}) => ({
+    this.setState (({offset, char}) => ({
       char: [...char, ...newChar],
       loading: false,
       newItemLoading: false,
       offset: offset + 9,
-      charEnded: ended
+      charEnded: ended,
     }));
   };
   onError = () => {
@@ -56,9 +59,21 @@ class CharList extends Component {
       error: true,
     });
   };
+  itemRefs = [];
 
+  setRef = ref => {
+    this.itemRefs.push (ref);
+  };
+
+  focusOnItem = id => {
+    this.itemRefs.forEach (item =>
+      item.classList.remove ('char__item_selected')
+    );
+    this.itemRefs[id].classList.add ('char__item_selected');
+    this.itemRefs[id].focus ();
+  };
   renderItems (arr) {
-    const items = arr.map (item => {
+    const items = arr.map ((item, i) => {
       let imgStyle = {objectFit: 'cover'};
       if (
         item.thumbnail ===
@@ -69,8 +84,19 @@ class CharList extends Component {
       return (
         <li
           className="char__item"
+          tabIndex={0}
+          ref={this.setRef}
           key={item.id}
-          onClick={() => this.props.onCharSelected (item.id)}
+          onClick={() => {
+            this.props.onCharSelected (item.id);
+            this.focusOnItem (i);
+          }}
+          onKeyPress={e => {
+            if (e.key === ' ' || e.key === 'Enter') {
+              this.props.onCharSelected (item.id);
+              this.focusOnItem (i);
+            }
+          }}
         >
           <img src={item.thumbnail} alt={item.name} style={imgStyle} />
           <div className="char__name">{item.name}</div>
@@ -84,7 +110,14 @@ class CharList extends Component {
     );
   }
   render () {
-    const {char, loading, error, offset, newItemLoading, charEnded} = this.state;
+    const {
+      char,
+      loading,
+      error,
+      offset,
+      newItemLoading,
+      charEnded,
+    } = this.state;
     const items = this.renderItems (char);
 
     const errorMessage = error ? <ErrorMessage /> : null;
@@ -100,11 +133,11 @@ class CharList extends Component {
 
         </ul>
         <button
-         className="button button__main button__long"
-         disabled={newItemLoading}
-         style={{'display': charEnded ? 'none' : 'block'}}
-         onClick={()=> this.onRequest(offset)}
-         >
+          className="button button__main button__long"
+          disabled={newItemLoading}
+          style={{display: charEnded ? 'none' : 'block'}}
+          onClick={() => this.onRequest (offset)}
+        >
           <div className="inner">load more</div>
         </button>
       </div>
@@ -112,6 +145,6 @@ class CharList extends Component {
   }
 }
 CharList.propTypes = {
-  onCharSelected: PropTypes.func.isRequired
-}
+  onCharSelected: PropTypes.func.isRequired,
+};
 export default CharList;
